@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Act Out XD</title>
   <style>
     body { margin:0; background:black; color:white; font-family:monospace; }
@@ -20,6 +20,7 @@
     .danger { color:#ff7070; border:0; background:none; cursor:pointer; }
     .muted { color:#aaa; font-size:12px; }
     .mod-badge { width:14px; height:14px; vertical-align:text-bottom; margin-left:4px; }
+    .input-row { display:flex; gap:8px; align-items:center; }
   </style>
 </head>
 <body>
@@ -28,7 +29,6 @@
       act out forum
     </h1>
 
-    <!-- Rules -->
     <div id="rules">
       <h3 style="margin:0 0 8px 0;">Rules:</h3>
       <ul style="margin:0 0 0 18px; padding:0;">
@@ -39,13 +39,14 @@
     </div>
 
     <!-- Username input -->
-<div id="username-container">
-  <p>Enter your username:</p>
-  <div style="display:flex;gap:8px;align-items:center;">
-    <input type="text" id="username-input" placeholder="your name">
-    <button id="username-btn">Enter</button>
-  </div>
-</div>
+    <div id="username-container">
+      <p>Enter your username:</p>
+      <div class="input-row">
+        <input type="text" id="username-input" placeholder="your name">
+        <button id="username-btn" style="background:white;color:black;padding:6px 10px;font-weight:bold;">Enter</button>
+      </div>
+      <p class="muted" style="margin-top:6px;">(press Enter or click the button)</p>
+    </div>
 
     <!-- Index -->
     <div id="index-view" style="display:none;">
@@ -62,25 +63,17 @@
     <!-- Act view -->
     <div id="act-view" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <button id="back-btn"
-          style="font-size:12px;text-decoration:underline;color:#aaa;margin-bottom:16px;background:none;border:none;">
-          ← back
-        </button>
-        <div class="small muted">
-          You: <span id="username-display"></span><span id="mod-badge-slot"></span>
-        </div>
+        <button id="back-btn" style="font-size:12px;text-decoration:underline;color:#aaa;background:none;border:none;">← back</button>
+        <div class="small muted">You: <span id="username-display"></span><span id="mod-badge-slot"></span></div>
       </div>
 
       <h2 id="act-title" style="font-size:18px; margin-bottom:8px;"></h2>
 
       <div style="border:1px solid #444; padding:12px; margin-bottom:24px;">
         <textarea id="post-text" placeholder="optional text..."></textarea>
-        <input type="file" id="post-image" />
+        <input type="file" id="post-image" accept="image/*" />
         <div style="margin-top:8px;">
-          <button id="post-btn"
-            style="background:white;color:black;padding:4px 8px;font-size:12px;font-weight:bold;">
-            post
-          </button>
+          <button id="post-btn" style="background:white;color:black;padding:6px 10px;font-weight:bold;">post</button>
           <span class="muted" style="margin-left:8px;">(image required)</span>
         </div>
       </div>
@@ -89,6 +82,11 @@
     </div>
   </div>
 
+  <!-- Firebase (compat) SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- Your script -->
   <script src="script.js"></script>
 </body>
 </html>
