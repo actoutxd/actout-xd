@@ -1,4 +1,5 @@
-
+/* fave ver of codr
+*/
 
 const usernameInput = document.getElementById("username-input");
 const usernameContainer = document.getElementById("username-container");
@@ -16,47 +17,37 @@ const modPassword = document.getElementById("mod-password");
 const modLoginBtn = document.getElementById("mod-login-btn");
 const modLogoutBtn = document.getElementById("mod-logout-btn");
 const modStatus = document.getElementById("mod-status");
-const bannedWordsContainer = document.getElementById("banned-words-container");
-const bannedWordsInput = document.getElementById("banned-words-input");
-const addBannedWordBtn = document.getElementById("add-banned-word-btn");
-const bannedWordsListEl = document.getElementById("banned-words-list");
-
+const modBadgeSlot = document.getElementById("mod-badge-slot");
 const usernameDisplay = document.getElementById("username-display");
 
 let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
-let bannedWords = JSON.parse(localStorage.getItem("bannedWords") || '["retard","retarded","fuck","shit","nigger","faggot","trannie"]');
-let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || '[]');
 let currentAct = null;
 
-const STAFF_PASSWORD = "Sug•|!"; // hardcoded plain-text password
+const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"];
 const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
-
-// --- helpers ---
-function escapeHtml(str) {
-  if (!str) return "";
-  return str.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-}
+const STAFF_PASSWORD = "Sug•|!"; // plain-text password
 
 function containsBannedWords(text) {
   if (!text) return false;
-  const normalized = text.toLowerCase().replace(/[^a-z0-9\s]/gi," ");
+  const normalized = text.toLowerCase().replace(/[^a-z0-9\s]/gi, " ");
   const parts = normalized.split(/\s+/).filter(Boolean);
-  return bannedWords.some(w=>parts.includes(w.toLowerCase()));
+  return bannedWords.some(w => parts.includes(w.toLowerCase()));
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 
 function isMod() {
   return sessionStorage.getItem("actout_is_mod") === "1";
 }
 
-function isBannedUser(user) {
-  return bannedUsers.includes(user);
-}
-
 // --- moderator login/logout ---
-modLoginBtn?.addEventListener("click", ()=>{
+modLoginBtn?.addEventListener("click", () => {
   const pw = modPassword.value.trim();
-  if(pw===STAFF_PASSWORD){
+  if (pw === STAFF_PASSWORD) {
     sessionStorage.setItem("actout_is_mod","1");
     modPassword.value="";
     updateModUI();
@@ -64,62 +55,29 @@ modLoginBtn?.addEventListener("click", ()=>{
   } else alert("Incorrect password");
 });
 
-modLogoutBtn?.addEventListener("click", ()=>{
+modLogoutBtn?.addEventListener("click", () => {
   sessionStorage.removeItem("actout_is_mod");
   updateModUI();
 });
 
-function updateModUI(){
+function updateModUI() {
   const mod = isMod();
   modLoginBtn.style.display = !mod ? "inline-block" : "none";
   modPassword.style.display = !mod ? "inline-block" : "none";
   modLogoutBtn.style.display = mod ? "inline-block" : "none";
   modStatus.textContent = mod ? "logged in as moderator" : "not logged in";
-
-  if(bannedWordsContainer) bannedWordsContainer.style.display = mod ? "block" : "none";
-  if(mod) renderBannedWords();
+  modBadgeSlot.innerHTML = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
 }
-
-// --- banned words management ---
-function renderBannedWords(){
-  bannedWordsListEl.innerHTML="";
-  bannedWords.forEach((w, idx)=>{
-    const li = document.createElement("li");
-    li.textContent=w;
-    if(isMod()){
-      const delBtn = document.createElement("button");
-      delBtn.textContent="×";
-      delBtn.style.marginLeft="6px";
-      delBtn.addEventListener("click", ()=>{
-        bannedWords.splice(idx,1);
-        localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
-        renderBannedWords();
-      });
-      li.appendChild(delBtn);
-    }
-    bannedWordsListEl.appendChild(li);
-  });
-}
-
-addBannedWordBtn?.addEventListener("click", ()=>{
-  const w = bannedWordsInput.value.trim().toLowerCase();
-  if(w && !bannedWords.includes(w)){
-    bannedWords.push(w);
-    localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
-    bannedWordsInput.value="";
-    renderBannedWords();
-  }
-});
 
 // --- views ---
-function showIndex(){
+function showIndex() {
   usernameContainer.style.display = username ? "none" : "block";
   indexView.style.display = username ? "block" : "none";
   actView.style.display = "none";
   usernameDisplay.textContent = username || "";
 }
 
-function showAct(){
+function showAct() {
   usernameContainer.style.display="none";
   indexView.style.display="none";
   actView.style.display="block";
@@ -130,17 +88,17 @@ function showAct(){
 }
 
 // --- posts rendering ---
-function renderPosts(){
-  actPosts.innerHTML="";
+function renderPosts() {
+  actPosts.innerHTML = "";
   const actList = posts[currentAct] || [];
-  if(actList.length===0){ actPosts.innerHTML="<p style='opacity:0.6'>no posts yet in this act</p>"; return; }
+  if(actList.length===0) { actPosts.innerHTML="<p style='opacity:0.6'>no posts yet in this act</p>"; return; }
 
   const mod = isMod();
 
   actList.forEach((p, idx)=>{
     const div = document.createElement("div");
     div.className="post";
-    const canDelete = mod || (username && username===p.username);
+    const canDelete = mod || (username && username === p.username);
     const delButtonHtml = canDelete ? `<button data-idx="${idx}" class="danger">delete</button>` : "";
     const userBadgeHtml = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
 
@@ -161,33 +119,23 @@ function renderPosts(){
         renderPosts();
       });
     }
-
     actPosts.appendChild(div);
   });
 }
 
 // --- init ---
-(function init(){
+(function init() {
   updateModUI();
 
   if(username){ usernameInput.value=username; showIndex(); } else { usernameContainer.style.display="block"; }
 
   usernameInput.addEventListener("change", ()=>{
     username=usernameInput.value.trim();
-    if(isBannedUser(username)){
-      alert("You are banned from posting!");
-      username="";
-      usernameInput.value="";
-      return;
-    }
     if(username){ localStorage.setItem("username", username); showIndex(); }
   });
 
   actsList.querySelectorAll("button").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      currentAct=btn.dataset.act;
-      showAct();
-    });
+    btn.addEventListener("click", ()=>{ currentAct=btn.dataset.act; showAct(); });
   });
 
   backBtn.addEventListener("click", ()=>{ currentAct=null; showIndex(); });
@@ -195,26 +143,19 @@ function renderPosts(){
   postBtn.addEventListener("click", ()=>{
     const file = postImage.files[0];
     const textValue = postText.value.trim();
-
     if(!file){ alert("You must add an image!"); return; }
-    if(containsBannedWords(textValue) || containsBannedWords(file.name)){ 
-      alert("Your post contains banned words and cannot be submitted."); 
-      return; 
-    }
-    if(isBannedUser(username)){
-      alert("You are banned from posting!");
-      return;
-    }
+    if(containsBannedWords(textValue)){ alert("Your post contains banned words and cannot be submitted."); return; }
+    if(containsBannedWords(file.name)){ alert("Your image filename contains banned words and cannot be submitted."); return; }
 
     const reader = new FileReader();
     reader.onload = function(ev){
       const newPost = {
         username,
-        text:textValue,
-        image:ev.target.result,
-        time:new Date().toLocaleString()
+        text: textValue,
+        image: ev.target.result,
+        time: new Date().toLocaleString()
       };
-      posts[currentAct]=posts[currentAct]? [newPost, ...posts[currentAct]] : [newPost];
+      posts[currentAct] = posts[currentAct] ? [newPost, ...posts[currentAct]] : [newPost];
       localStorage.setItem("posts", JSON.stringify(posts));
       postText.value="";
       postImage.value="";
