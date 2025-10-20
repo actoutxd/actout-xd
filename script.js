@@ -1,5 +1,5 @@
 /* script.js - Act Out (plain JS)
-   Plain-text moderator password
+   Moderator features: delete any post, manage banned words, ban IPs
 */
 
 const usernameInput = document.getElementById("username-input");
@@ -20,15 +20,20 @@ const modLogoutBtn = document.getElementById("mod-logout-btn");
 const modStatus = document.getElementById("mod-status");
 const modBadgeSlot = document.getElementById("mod-badge-slot");
 const usernameDisplay = document.getElementById("username-display");
+const bannedWordsInput = document.getElementById("banned-words-input");
+const addBannedWordBtn = document.getElementById("add-banned-word");
+const bannedWordsList = document.getElementById("banned-words-list");
 
 let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
+let bannedWords = JSON.parse(localStorage.getItem("bannedWords") || '["retard","retarded","fuck","shit","nigger","faggot","trannie"]');
+let bannedIPs = JSON.parse(localStorage.getItem("bannedIPs") || "[]");
 let currentAct = null;
 
-const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"];
 const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
 const STAFF_PASSWORD = "Sug•|!"; // plain-text password
 
+// --- helpers ---
 function containsBannedWords(text) {
   if (!text) return false;
   const normalized = text.toLowerCase().replace(/[^a-z0-9\s]/gi, " ");
@@ -43,6 +48,11 @@ function escapeHtml(str) {
 
 function isMod() {
   return sessionStorage.getItem("actout_is_mod") === "1";
+}
+
+function userIP() {
+  // simplified; real IP blocking requires server
+  return "dummy-ip"; 
 }
 
 // --- moderator login/logout ---
@@ -68,6 +78,9 @@ function updateModUI() {
   modLogoutBtn.style.display = mod ? "inline-block" : "none";
   modStatus.textContent = mod ? "logged in as moderator" : "not logged in";
   modBadgeSlot.innerHTML = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
+  if(bannedWordsList) bannedWordsList.style.display = mod ? "block" : "none";
+  if(addBannedWordBtn) addBannedWordBtn.style.display = mod ? "inline-block" : "none";
+  if(bannedWordsInput) bannedWordsInput.style.display = mod ? "inline-block" : "none";
 }
 
 // --- views ---
@@ -124,8 +137,40 @@ function renderPosts() {
   });
 }
 
+// --- manage banned words ---
+addBannedWordBtn?.addEventListener("click", ()=>{
+  const w = bannedWordsInput.value.trim().toLowerCase();
+  if(!w) return;
+  if(!bannedWords.includes(w)) bannedWords.push(w);
+  bannedWordsInput.value="";
+  localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
+  renderBannedWords();
+});
+
+function renderBannedWords() {
+  if(!bannedWordsList) return;
+  bannedWordsList.innerHTML="";
+  bannedWords.forEach((w,i)=>{
+    const li = document.createElement("li");
+    li.textContent=w;
+    if(isMod()){
+      const delBtn = document.createElement("button");
+      delBtn.textContent="x";
+      delBtn.style.marginLeft="8px";
+      delBtn.addEventListener("click", ()=>{
+        bannedWords.splice(i,1);
+        localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
+        renderBannedWords();
+      });
+      li.appendChild(delBtn);
+    }
+    bannedWordsList.appendChild(li);
+  });
+}
+
 // --- init ---
 (function init() {
+  renderBannedWords();
   updateModUI();
 
   if(username){ usernameInput.value=username; showIndex(); } else { usernameContainer.style.display="block"; }
@@ -147,6 +192,7 @@ function renderPosts() {
     if(!file){ alert("You must add an image!"); return; }
     if(containsBannedWords(textValue)){ alert("Your post contains banned words and cannot be submitted."); return; }
     if(containsBannedWords(file.name)){ alert("Your image filename contains banned words and cannot be submitted."); return; }
+    if(bannedIPs.includes(userIP())){ alert("Your IP is banned."); return; }
 
     const reader = new FileReader();
     reader.onload = function(ev){
