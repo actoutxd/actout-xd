@@ -26,7 +26,8 @@ let currentAct = null;
 
 const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"];
 const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
-const STAFF_PASSWORD = "Sug•|!"; // plain-text password
+// STAFF_PASSWORD is hardcoded and cannot be changed through the UI
+const STAFF_PASSWORD = "Sug•|!";
 
 function containsBannedWords(text) {
   if (!text) return false;
