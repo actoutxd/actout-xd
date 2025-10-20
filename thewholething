@@ -12,11 +12,11 @@ export default function ActOut() {
   }, [posts]);
 
   const acts = [
-    "working at mcdonald's",
-    "space janitor",
-    "retro barista",
-    "arcade attendant",
-    "library whisperer",
+    "working at a fast food",
+    "animation studio",
+    "doing chores",
+    "baking",
+    "being a teacher",
   ];
 
   function saveUsername(name) {
