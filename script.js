@@ -1,5 +1,5 @@
 /* script.js - Act Out (plain JS)
-   Hardcoded moderator password is internal only; no UI for setting it
+   Moderator powers are automatic based on username
    Moderator powers: delete any post, manage banned words, ban users
 */
 
@@ -15,7 +15,6 @@ const postImage = document.getElementById("post-image");
 const postBtn = document.getElementById("post-btn");
 const actPosts = document.getElementById("act-posts");
 
-const modLogoutBtn = document.getElementById("mod-logout-btn");
 const modStatus = document.getElementById("mod-status");
 const modBadgeSlot = document.getElementById("mod-badge-slot");
 const usernameDisplay = document.getElementById("username-display");
@@ -25,9 +24,11 @@ let posts = JSON.parse(localStorage.getItem("posts") || "{}");
 let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || '[]');
 let currentAct = null;
 
+// Hardcoded moderators
+const moderators = ["kaiberriezz"];
+
 const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"];
 const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
-const STAFF_PASSWORD = "Sug•|!"; // hardcoded internal password
 
 function containsBannedWords(text) {
   if (!text) return false;
@@ -42,26 +43,11 @@ function escapeHtml(str) {
 }
 
 function isMod() {
-  return sessionStorage.getItem("actout_is_mod") === "1";
+  return moderators.includes(username);
 }
-
-// call this internally to log in as a mod (hardcoded password)
-function loginMod(pw) {
-  if(pw===STAFF_PASSWORD){
-    sessionStorage.setItem("actout_is_mod","1");
-    updateModUI();
-    alert("Moderator login successful");
-  } else alert("Incorrect password");
-}
-
-modLogoutBtn?.addEventListener("click", ()=>{
-  sessionStorage.removeItem("actout_is_mod");
-  updateModUI();
-});
 
 function updateModUI() {
   const mod = isMod();
-  modLogoutBtn.style.display = mod ? "inline-block" : "none";
   modStatus.textContent = mod ? "logged in as moderator" : "not logged in";
   modBadgeSlot.innerHTML = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
 }
@@ -135,7 +121,7 @@ function renderPosts() {
       usernameInput.value="";
       return;
     }
-    if(username){ localStorage.setItem("username", username); showIndex(); }
+    if(username){ localStorage.setItem("username", username); showIndex(); updateModUI(); }
   });
 
   actsList.querySelectorAll("button").forEach(btn=>{
