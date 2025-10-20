@@ -1,5 +1,6 @@
 /* script.js - Act Out (plain JS)
-   Moderator features: delete any post, manage banned words, ban IPs
+   Moderator password is hardcoded to:!
+   Features: post deletion, banned words management, IP bans
 */
 
 const usernameInput = document.getElementById("username-input");
@@ -19,19 +20,23 @@ const modLoginBtn = document.getElementById("mod-login-btn");
 const modLogoutBtn = document.getElementById("mod-logout-btn");
 const modStatus = document.getElementById("mod-status");
 const modBadgeSlot = document.getElementById("mod-badge-slot");
-const usernameDisplay = document.getElementById("username-display");
-const bannedWordsInput = document.getElementById("banned-words-input");
-const addBannedWordBtn = document.getElementById("add-banned-word");
+const adminControls = document.getElementById("admin-controls");
 const bannedWordsList = document.getElementById("banned-words-list");
+const bannedWordInput = document.getElementById("banned-word-input");
+const addBannedWordBtn = document.getElementById("add-banned-word-btn");
+const bannedIPsList = document.getElementById("banned-ips-list");
+const banIPInput = document.getElementById("ban-ip-input");
+const addBanIPBtn = document.getElementById("add-ban-ip-btn");
 
+const STAFF_PASSWORD = "Sug•|!"; // Hardcoded plain-text password
+const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
 let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
-let bannedWords = JSON.parse(localStorage.getItem("bannedWords") || '["retard","retarded","fuck","shit","nigger","faggot","trannie"]');
-let bannedIPs = JSON.parse(localStorage.getItem("bannedIPs") || "[]");
 let currentAct = null;
 
-const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
-const STAFF_PASSWORD = "Sug•|!"; // plain-text password
+// banned words & IPs
+let bannedWords = JSON.parse(localStorage.getItem("bannedWords") || '["retard","retarded","fuck","shit","nigger","faggot","trannie"]');
+let bannedIPs = JSON.parse(localStorage.getItem("bannedIPs") || '[]');
 
 // --- helpers ---
 function containsBannedWords(text) {
@@ -48,11 +53,6 @@ function escapeHtml(str) {
 
 function isMod() {
   return sessionStorage.getItem("actout_is_mod") === "1";
-}
-
-function userIP() {
-  // simplified; real IP blocking requires server
-  return "dummy-ip"; 
 }
 
 // --- moderator login/logout ---
@@ -78,17 +78,68 @@ function updateModUI() {
   modLogoutBtn.style.display = mod ? "inline-block" : "none";
   modStatus.textContent = mod ? "logged in as moderator" : "not logged in";
   modBadgeSlot.innerHTML = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
-  if(bannedWordsList) bannedWordsList.style.display = mod ? "block" : "none";
-  if(addBannedWordBtn) addBannedWordBtn.style.display = mod ? "inline-block" : "none";
-  if(bannedWordsInput) bannedWordsInput.style.display = mod ? "inline-block" : "none";
+  if(adminControls) adminControls.style.display = mod ? "block" : "none";
+  if(mod) renderAdminLists();
 }
+
+// --- admin controls ---
+function renderAdminLists(){
+  bannedWordsList.innerHTML = "";
+  bannedWords.forEach((w,i)=>{
+    const li = document.createElement("li");
+    li.textContent = w + " ";
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "delete";
+    delBtn.addEventListener("click", ()=>{
+      bannedWords.splice(i,1);
+      localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
+      renderAdminLists();
+    });
+    li.appendChild(delBtn);
+    bannedWordsList.appendChild(li);
+  });
+
+  bannedIPsList.innerHTML = "";
+  bannedIPs.forEach((ip,i)=>{
+    const li = document.createElement("li");
+    li.textContent = ip + " ";
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "unban";
+    delBtn.addEventListener("click", ()=>{
+      bannedIPs.splice(i,1);
+      localStorage.setItem("bannedIPs", JSON.stringify(bannedIPs));
+      renderAdminLists();
+    });
+    li.appendChild(delBtn);
+    bannedIPsList.appendChild(li);
+  });
+}
+
+addBannedWordBtn.addEventListener("click", ()=>{
+  const w = bannedWordInput.value.trim();
+  if(w && !bannedWords.includes(w)){
+    bannedWords.push(w);
+    localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
+    bannedWordInput.value="";
+    renderAdminLists();
+  }
+});
+
+addBanIPBtn.addEventListener("click", ()=>{
+  const ip = banIPInput.value.trim();
+  if(ip && !bannedIPs.includes(ip)){
+    bannedIPs.push(ip);
+    localStorage.setItem("bannedIPs", JSON.stringify(bannedIPs));
+    banIPInput.value="";
+    renderAdminLists();
+  }
+});
 
 // --- views ---
 function showIndex() {
   usernameContainer.style.display = username ? "none" : "block";
   indexView.style.display = username ? "block" : "none";
   actView.style.display = "none";
-  usernameDisplay.textContent = username || "";
 }
 
 function showAct() {
@@ -96,7 +147,6 @@ function showAct() {
   indexView.style.display="none";
   actView.style.display="block";
   actTitle.textContent=currentAct;
-  usernameDisplay.textContent=username||"";
   updateModUI();
   renderPosts();
 }
@@ -106,13 +156,13 @@ function renderPosts() {
   actPosts.innerHTML = "";
   const actList = posts[currentAct] || [];
   if(actList.length===0) { actPosts.innerHTML="<p style='opacity:0.6'>no posts yet in this act</p>"; return; }
-
   const mod = isMod();
+  const userIP = ""; // placeholder; implement actual IP detection if needed
 
   actList.forEach((p, idx)=>{
     const div = document.createElement("div");
     div.className="post";
-    const canDelete = mod || (username && username === p.username);
+    const canDelete = mod;
     const delButtonHtml = canDelete ? `<button data-idx="${idx}" class="danger">delete</button>` : "";
     const userBadgeHtml = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
 
@@ -137,40 +187,8 @@ function renderPosts() {
   });
 }
 
-// --- manage banned words ---
-addBannedWordBtn?.addEventListener("click", ()=>{
-  const w = bannedWordsInput.value.trim().toLowerCase();
-  if(!w) return;
-  if(!bannedWords.includes(w)) bannedWords.push(w);
-  bannedWordsInput.value="";
-  localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
-  renderBannedWords();
-});
-
-function renderBannedWords() {
-  if(!bannedWordsList) return;
-  bannedWordsList.innerHTML="";
-  bannedWords.forEach((w,i)=>{
-    const li = document.createElement("li");
-    li.textContent=w;
-    if(isMod()){
-      const delBtn = document.createElement("button");
-      delBtn.textContent="x";
-      delBtn.style.marginLeft="8px";
-      delBtn.addEventListener("click", ()=>{
-        bannedWords.splice(i,1);
-        localStorage.setItem("bannedWords", JSON.stringify(bannedWords));
-        renderBannedWords();
-      });
-      li.appendChild(delBtn);
-    }
-    bannedWordsList.appendChild(li);
-  });
-}
-
 // --- init ---
 (function init() {
-  renderBannedWords();
   updateModUI();
 
   if(username){ usernameInput.value=username; showIndex(); } else { usernameContainer.style.display="block"; }
@@ -192,7 +210,9 @@ function renderBannedWords() {
     if(!file){ alert("You must add an image!"); return; }
     if(containsBannedWords(textValue)){ alert("Your post contains banned words and cannot be submitted."); return; }
     if(containsBannedWords(file.name)){ alert("Your image filename contains banned words and cannot be submitted."); return; }
-    if(bannedIPs.includes(userIP())){ alert("Your IP is banned."); return; }
+
+    const userIP = ""; // placeholder for IP detection
+    if(bannedIPs.includes(userIP)){ alert("You are banned from posting."); return; }
 
     const reader = new FileReader();
     reader.onload = function(ev){
