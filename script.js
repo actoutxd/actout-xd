@@ -14,6 +14,15 @@ let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
 let currentAct = null;
 
+// List of banned words (simplified)
+const bannedWords = ["gore", "porn", "fuck", "shit", "slur1", "slur2"]; // add more slurs as needed
+
+function containsBannedWords(text) {
+  const lower = text.toLowerCase();
+  return bannedWords.some(word => lower.includes(word));
+}
+
+// Show views
 function showIndex() {
   usernameContainer.style.display = username ? "none" : "block";
   indexView.style.display = username ? "block" : "none";
@@ -28,6 +37,7 @@ function showAct() {
   renderPosts();
 }
 
+// Render posts for current act
 function renderPosts() {
   actPosts.innerHTML = "";
   const actList = posts[currentAct] || [];
@@ -47,13 +57,11 @@ function renderPosts() {
   }
 }
 
-// username
-if (username) {
-  showIndex();
-} else {
-  usernameContainer.style.display = "block";
-}
+// Initialize
+if (username) showIndex();
+else usernameContainer.style.display = "block";
 
+// Username input
 usernameInput.addEventListener("change", () => {
   username = usernameInput.value.trim();
   if (username) {
@@ -62,7 +70,7 @@ usernameInput.addEventListener("change", () => {
   }
 });
 
-// acts click
+// Act buttons
 actsList.querySelectorAll("button").forEach(btn => {
   btn.addEventListener("click", () => {
     currentAct = btn.dataset.act;
@@ -70,24 +78,31 @@ actsList.querySelectorAll("button").forEach(btn => {
   });
 });
 
-// back button
+// Back button
 backBtn.addEventListener("click", () => {
   currentAct = null;
   showIndex();
 });
 
-// post button
+// Post button
 postBtn.addEventListener("click", () => {
   const file = postImage.files[0];
+  const textValue = postText.value.trim();
+
   if (!file) {
     alert("You must add an image!");
     return;
   }
+  if (containsBannedWords(textValue)) {
+    alert("Your post contains banned words and cannot be submitted.");
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = function(ev) {
     const newPost = {
       username,
-      text: postText.value,
+      text: textValue,
       image: ev.target.result,
       time: new Date().toLocaleString()
     };
