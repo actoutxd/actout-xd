@@ -14,12 +14,13 @@ let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
 let currentAct = null;
 
-// List of banned words (simplified)
-const bannedWords = ["gore", "porn", "fuck", "shit", "slur1", "slur2"]; // add more slurs as needed
+// Banned words list
+const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"]; // add slurs here
 
+// Check text for banned words (ignores case & punctuation)
 function containsBannedWords(text) {
-  const lower = text.toLowerCase();
-  return bannedWords.some(word => lower.includes(word));
+  const normalized = text.toLowerCase().replace(/[^a-z0-9\s]/gi, " ");
+  return bannedWords.some(word => normalized.split(/\s+/).includes(word.toLowerCase()));
 }
 
 // Show views
@@ -44,14 +45,25 @@ function renderPosts() {
   if (actList.length === 0) {
     actPosts.innerHTML = "<p style='opacity:0.6'>no posts yet in this act</p>";
   } else {
-    actList.forEach(p => {
+    actList.forEach((p, idx) => {
       const div = document.createElement("div");
       div.className = "post";
       div.innerHTML = `
-        <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">posted by ${p.username} · ${p.time}</div>
+        <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
+          posted by ${p.username} · ${p.time} 
+          <button data-idx="${idx}" style="font-size:10px; margin-left:8px; color:red; background:none; border:none; cursor:pointer;">delete</button>
+        </div>
         ${p.text ? `<p style="margin-bottom:8px; font-size:14px; white-space:pre-wrap;">${p.text}</p>` : ""}
         <img src="${p.image}" alt="post">
       `;
+      // Add delete handler
+      div.querySelector("button").addEventListener("click", () => {
+        if (confirm("Delete this post?")) {
+          posts[currentAct].splice(idx, 1);
+          localStorage.setItem("posts", JSON.stringify(posts));
+          renderPosts();
+        }
+      });
       actPosts.appendChild(div);
     });
   }
