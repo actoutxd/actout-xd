@@ -1,8 +1,17 @@
-/* script.js - Act Out (plain JS)
-   Moderator powers are automatic based on username
-   Moderator powers: delete any post, manage banned words, ban users
-*/
+// --- Firebase setup ---
+const firebaseConfig = {
+  apiKey: "AIzaSyABxAt_UX9HFOIicQBomoFTLBPSUgMWsdw",
+  authDomain: "act-out-xd.firebaseapp.com",
+  projectId: "act-out-xd",
+  storageBucket: "act-out-xd.appspot.com",
+  messagingSenderId: "829598383719",
+  appId: "1:829598383719:web:ff9ece19198aeff41e9ec2"
+};
 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// DOM elements
 const usernameInput = document.getElementById("username-input");
 const usernameContainer = document.getElementById("username-container");
 const indexView = document.getElementById("index-view");
@@ -14,21 +23,22 @@ const postText = document.getElementById("post-text");
 const postImage = document.getElementById("post-image");
 const postBtn = document.getElementById("post-btn");
 const actPosts = document.getElementById("act-posts");
-
-const modStatus = document.getElementById("mod-status");
 const modBadgeSlot = document.getElementById("mod-badge-slot");
 const usernameDisplay = document.getElementById("username-display");
+const modStatus = document.getElementById("mod-status");
 
+// Settings
 let username = localStorage.getItem("username") || "";
-let posts = JSON.parse(localStorage.getItem("posts") || "{}");
-let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || '[]');
 let currentAct = null;
-
-// Hardcoded moderators
 const moderators = ["kaiberriezz"];
-
 const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"];
 const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
+
+// --- Helpers ---
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
 
 function containsBannedWords(text) {
   if (!text) return false;
@@ -37,121 +47,132 @@ function containsBannedWords(text) {
   return bannedWords.some(w => parts.includes(w.toLowerCase()));
 }
 
-function escapeHtml(str) {
-  if (!str) return "";
-  return str.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-}
-
 function isMod() {
   return moderators.includes(username);
 }
 
-function updateModUI() {
-  const mod = isMod();
-  modStatus.textContent = mod ? "logged in as moderator" : "not logged in";
-  modBadgeSlot.innerHTML = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
-}
-
-// --- views ---
+// --- Views ---
 function showIndex() {
   usernameContainer.style.display = username ? "none" : "block";
   indexView.style.display = username ? "block" : "none";
   actView.style.display = "none";
   usernameDisplay.textContent = username || "";
+  updateModUI();
 }
 
 function showAct() {
-  usernameContainer.style.display="none";
-  indexView.style.display="none";
-  actView.style.display="block";
-  actTitle.textContent=currentAct;
-  usernameDisplay.textContent=username||"";
+  usernameContainer.style.display = "none";
+  indexView.style.display = "none";
+  actView.style.display = "block";
+  actTitle.textContent = currentAct;
+  usernameDisplay.textContent = username || "";
   updateModUI();
-  renderPosts();
+  subscribePosts();
 }
 
-// --- posts rendering ---
-function renderPosts() {
-  actPosts.innerHTML = "";
-  const actList = posts[currentAct] || [];
-  if(actList.length===0) { actPosts.innerHTML="<p style='opacity:0.6'>no posts yet in this act</p>"; return; }
-
+// --- Moderator UI ---
+function updateModUI() {
   const mod = isMod();
-
-  actList.forEach((p, idx)=>{
-    const div = document.createElement("div");
-    div.className="post";
-    const canDelete = mod || (username && username === p.username);
-    const delButtonHtml = canDelete ? `<button data-idx="${idx}" class="danger">delete</button>` : "";
-    const userBadgeHtml = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
-
-    div.innerHTML=`
-      <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
-        posted by ${escapeHtml(p.username)} ${userBadgeHtml} · ${escapeHtml(p.time)} ${delButtonHtml}
-      </div>
-      ${p.text ? `<p style="margin-bottom:8px; font-size:14px; white-space:pre-wrap;">${escapeHtml(p.text)}</p>` : ""}
-      <img src="${p.image}" alt="post">
-    `;
-
-    if(canDelete){
-      const btn = div.querySelector("button");
-      btn.addEventListener("click", ()=>{
-        if(!confirm("Delete this post?")) return;
-        posts[currentAct].splice(idx,1);
-        localStorage.setItem("posts", JSON.stringify(posts));
-        renderPosts();
-      });
-    }
-
-    actPosts.appendChild(div);
-  });
+  modStatus.textContent = mod ? "logged in as moderator" : "not a moderator";
+  modBadgeSlot.innerHTML = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
 }
 
-// --- init ---
+// --- Firestore ---
+let unsubscribePosts = null;
+
+function subscribePosts() {
+  if (unsubscribePosts) unsubscribePosts();
+  unsubscribePosts = db.collection("acts")
+    .doc(currentAct)
+    .collection("posts")
+    .orderBy("time", "desc")
+    .onSnapshot(snapshot => {
+      actPosts.innerHTML = "";
+      if (snapshot.empty) {
+        actPosts.innerHTML = "<p style='opacity:0.6'>no posts yet in this act</p>";
+        return;
+      }
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const div = document.createElement("div");
+        div.className = "post";
+        const canDelete = isMod() || p.username === username;
+        const delButtonHtml = canDelete ? `<button data-id="${doc.id}" class="danger">delete</button>` : "";
+        const userBadgeHtml = isMod() ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
+
+        div.innerHTML = `
+          <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
+            posted by ${escapeHtml(p.username)} ${userBadgeHtml} · ${new Date(p.time).toLocaleString()} ${delButtonHtml}
+          </div>
+          ${p.text ? `<p style="margin-bottom:8px; font-size:14px; white-space:pre-wrap;">${escapeHtml(p.text)}</p>` : ""}
+          <img src="${p.image}" alt="post">
+        `;
+
+        if (canDelete) {
+          div.querySelector("button").addEventListener("click", () => {
+            if (!confirm("Delete this post?")) return;
+            db.collection("acts").doc(currentAct).collection("posts").doc(doc.id).delete();
+          });
+        }
+
+        actPosts.appendChild(div);
+      });
+    });
+}
+
+// --- Init ---
 (function init() {
   updateModUI();
+  if (username) {
+    usernameInput.value = username;
+    showIndex();
+  } else {
+    usernameContainer.style.display = "block";
+  }
 
-  if(username){ usernameInput.value=username; showIndex(); } else { usernameContainer.style.display="block"; }
-
-  usernameInput.addEventListener("change", ()=>{
-    username=usernameInput.value.trim();
-    if(bannedUsers.includes(username)){
-      alert("You are banned from posting!");
-      username="";
-      usernameInput.value="";
-      return;
+  usernameInput.addEventListener("change", () => {
+    username = usernameInput.value.trim();
+    if (username) {
+      localStorage.setItem("username", username);
+      showIndex();
     }
-    if(username){ localStorage.setItem("username", username); showIndex(); updateModUI(); }
   });
 
-  actsList.querySelectorAll("button").forEach(btn=>{
-    btn.addEventListener("click", ()=>{ currentAct=btn.dataset.act; showAct(); });
+  actsList.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => { 
+      currentAct = btn.dataset.act; 
+      showAct(); 
+    });
   });
 
-  backBtn.addEventListener("click", ()=>{ currentAct=null; showIndex(); });
+  backBtn.addEventListener("click", () => { 
+    currentAct = null; 
+    showIndex(); 
+    if (unsubscribePosts) unsubscribePosts();
+  });
 
-  postBtn.addEventListener("click", ()=>{
+  postBtn.addEventListener("click", () => {
     const file = postImage.files[0];
     const textValue = postText.value.trim();
-    if(!file){ alert("You must add an image!"); return; }
-    if(containsBannedWords(textValue)){ alert("Your post contains banned words and cannot be submitted."); return; }
-    if(containsBannedWords(file.name)){ alert("Your image filename contains banned words and cannot be submitted."); return; }
-    if(bannedUsers.includes(username)){ alert("You are banned from posting!"); return; }
+    if (!file) { alert("You must add an image!"); return; }
+    if (containsBannedWords(textValue) || containsBannedWords(file.name)) {
+      alert("Your post contains banned words!");
+      return;
+    }
 
     const reader = new FileReader();
-    reader.onload = function(ev){
-      const newPost = {
+    reader.onload = function(ev) {
+      db.collection("acts").doc(currentAct).collection("posts").add({
         username,
         text: textValue,
         image: ev.target.result,
-        time: new Date().toLocaleString()
-      };
-      posts[currentAct] = posts[currentAct] ? [newPost, ...posts[currentAct]] : [newPost];
-      localStorage.setItem("posts", JSON.stringify(posts));
-      postText.value="";
-      postImage.value="";
-      renderPosts();
+        time: Date.now()
+      }).then(() => {
+        postText.value = "";
+        postImage.value = "";
+      });
     };
     reader.readAsDataURL(file);
   });
 })();
+                                                                       
