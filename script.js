@@ -1,7 +1,6 @@
-/* script.js - Act Out (plain JS) */
-/* Notes:
-  
-   - session moderation flag stored in sessionStorage 'actout_is_mod' (cleared on tab close)
+/* script.js - Act Out (plain JS)
+   Full functionality: banned words, moderation, delete posts, mod badge
+   Staff password auto-set to (NO YOU GUYS FONT GET) if none exists
 */
 
 const usernameInput = document.getElementById("username-input");
@@ -26,23 +25,23 @@ const modStatus = document.getElementById("mod-status");
 const modBadgeSlot = document.getElementById("mod-badge-slot");
 const usernameDisplay = document.getElementById("username-display");
 
+// posts & user
 let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
 let currentAct = null;
 
-// Banned words list (updated)
-const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"]; // add slurs here
+// banned words
+const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"]; 
+const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
 
-// helper: SHA-256 hex digest
+// --- helpers ---
 async function sha256Hex(str) {
   const enc = new TextEncoder();
   const data = enc.encode(str);
   const hash = await crypto.subtle.digest("SHA-256", data);
-  const bytes = new Uint8Array(hash);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,"0")).join("");
 }
 
-// check banned words in text (ignores case and punctuation)
 function containsBannedWords(text) {
   if (!text) return false;
   const normalized = text.toLowerCase().replace(/[^a-z0-9\s]/gi, " ");
@@ -50,66 +49,54 @@ function containsBannedWords(text) {
   return bannedWords.some(w => parts.includes(w.toLowerCase()));
 }
 
-// ---- moderator helpers ----
-function modHashExists() {
-  return !!localStorage.getItem("actout_mod_hash");
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 
-// set one-time staff password
-setModBtn.addEventListener("click", async () => {
-  if (modHashExists()) {
-    alert("A staff password is already set.");
-    return;
-  }
+// --- moderator helpers ---
+function modHashExists() { return !!localStorage.getItem("actout_mod_hash"); }
+
+setModBtn?.addEventListener("click", async () => {
+  if (modHashExists()) return alert("Staff password already set");
   const pw = setModPassword.value.trim();
-  if (!pw) return alert("Enter a password to set.");
+  if (!pw) return alert("Enter password to set");
   const hash = await sha256Hex(pw);
   localStorage.setItem("actout_mod_hash", hash);
-  setModPassword.value = "";
-  setModContainer.style.display = "none";
-  alert("Staff password set. Use it to log in.");
+  setModPassword.value="";
+  setModContainer.style.display="none";
   updateModUI();
 });
 
-// login
-modLoginBtn.addEventListener("click", async () => {
+modLoginBtn?.addEventListener("click", async () => {
   const pw = modPassword.value.trim();
   if (!pw) return alert("Enter password to log in.");
   const hash = await sha256Hex(pw);
-  const stored = localStorage.getItem("actout_mod_hash");
-  if (stored === hash) {
-    sessionStorage.setItem("actout_is_mod", "1");
-    modPassword.value = "";
+  if (hash === localStorage.getItem("actout_mod_hash")) {
+    sessionStorage.setItem("actout_is_mod","1");
+    modPassword.value="";
     updateModUI();
-    alert("Moderator login successful.");
-  } else {
-    alert("Incorrect password.");
-  }
+    alert("Moderator login successful");
+  } else alert("Incorrect password");
 });
 
-// logout
-modLogoutBtn.addEventListener("click", () => {
+modLogoutBtn?.addEventListener("click", () => {
   sessionStorage.removeItem("actout_is_mod");
   updateModUI();
 });
 
-// update moderator UI
 function updateModUI() {
   const isMod = !!sessionStorage.getItem("actout_is_mod");
   const hasHash = modHashExists();
-
-  setModContainer.style.display = hasHash ? "none" : "flex";
-
-  modLoginBtn.style.display = hasHash && !isMod ? "inline-block" : "none";
-  modPassword.style.display = hasHash && !isMod ? "inline-block" : "none";
-  modLogoutBtn.style.display = isMod ? "inline-block" : "none";
-
-  modStatus.textContent = isMod ? "logged in as moderator" : (hasHash ? "staff password set" : "no staff password set");
-
-  modBadgeSlot.innerHTML = isMod ? '<span class="mod-badge">MOD</span>' : '';
+  if(setModContainer) setModContainer.style.display = hasHash ? "none" : "flex";
+  if(modLoginBtn) modLoginBtn.style.display = hasHash && !isMod ? "inline-block" : "none";
+  if(modPassword) modPassword.style.display = hasHash && !isMod ? "inline-block" : "none";
+  if(modLogoutBtn) modLogoutBtn.style.display = isMod ? "inline-block" : "none";
+  if(modStatus) modStatus.textContent = isMod ? "logged in as moderator" : (hasHash ? "staff password set" : "no staff password set");
+  if(modBadgeSlot) modBadgeSlot.innerHTML = isMod ? '<span class="mod-badge">MOD</span>' : '';
 }
 
-// ---- view rendering ----
+// --- views ---
 function showIndex() {
   usernameContainer.style.display = username ? "none" : "block";
   indexView.style.display = username ? "block" : "none";
@@ -118,43 +105,42 @@ function showIndex() {
 }
 
 function showAct() {
-  usernameContainer.style.display = "none";
-  indexView.style.display = "none";
-  actView.style.display = "block";
-  actTitle.textContent = currentAct;
-  usernameDisplay.textContent = username || "";
+  usernameContainer.style.display="none";
+  indexView.style.display="none";
+  actView.style.display="block";
+  actTitle.textContent=currentAct;
+  usernameDisplay.textContent=username||"";
   updateModUI();
   renderPosts();
 }
 
-// render posts with delete buttons only for owner or moderator
+// --- posts rendering ---
 function renderPosts() {
   actPosts.innerHTML = "";
   const actList = posts[currentAct] || [];
-  if (actList.length === 0) {
-    actPosts.innerHTML = "<p style='opacity:0.6'>no posts yet in this act</p>";
-    return;
-  }
-
+  if(actList.length===0) { actPosts.innerHTML="<p style='opacity:0.6'>no posts yet in this act</p>"; return; }
   const isMod = !!sessionStorage.getItem("actout_is_mod");
 
-  actList.forEach((p, idx) => {
+  actList.forEach((p, idx)=>{
     const div = document.createElement("div");
-    div.className = "post";
+    div.className="post";
     const canDelete = isMod || (username && username === p.username);
     const delButtonHtml = canDelete ? `<button data-idx="${idx}" class="danger">delete</button>` : "";
-    div.innerHTML = `
+    const userBadgeHtml = isMod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
+
+    div.innerHTML=`
       <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
-        posted by ${escapeHtml(p.username)} · ${escapeHtml(p.time)} ${delButtonHtml}
+        posted by ${escapeHtml(p.username)} ${userBadgeHtml} · ${escapeHtml(p.time)} ${delButtonHtml}
       </div>
       ${p.text ? `<p style="margin-bottom:8px; font-size:14px; white-space:pre-wrap;">${escapeHtml(p.text)}</p>` : ""}
       <img src="${p.image}" alt="post">
     `;
-    if (canDelete) {
+
+    if(canDelete){
       const btn = div.querySelector("button");
-      btn.addEventListener("click", () => {
-        if (!confirm("Delete this post?")) return;
-        posts[currentAct].splice(idx, 1);
+      btn.addEventListener("click", ()=>{
+        if(!confirm("Delete this post?")) return;
+        posts[currentAct].splice(idx,1);
         localStorage.setItem("posts", JSON.stringify(posts));
         renderPosts();
       });
@@ -163,76 +149,51 @@ function renderPosts() {
   });
 }
 
-// helper to escape HTML
-function escapeHtml(str) {
-  if (!str) return "";
-  return str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-}
-
-// ---- init / events ----
-if (username) {
-  usernameInput.value = username;
-  showIndex();
-} else {
-  usernameContainer.style.display = "block";
-}
-
-usernameInput.addEventListener("change", () => {
-  username = usernameInput.value.trim();
-  if (username) {
-    localStorage.setItem("username", username);
-    showIndex();
+// --- init ---
+(async function init() {
+  if(!modHashExists()){
+    const autoPw="Sug•|!";
+    const hash=await sha256Hex(autoPw);
+    localStorage.setItem("actout_mod_hash",hash);
+    if(setModContainer) setModContainer.style.display="none";
   }
-});
 
-// act buttons
-actsList.querySelectorAll("button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    currentAct = btn.dataset.act;
-    showAct();
+  updateModUI();
+
+  if(username){ usernameInput.value=username; showIndex(); } else { usernameContainer.style.display="block"; }
+
+  usernameInput.addEventListener("change", ()=>{
+    username=usernameInput.value.trim();
+    if(username){ localStorage.setItem("username", username); showIndex(); }
   });
-});
 
-// back
-backBtn.addEventListener("click", () => {
-  currentAct = null;
-  showIndex();
-});
+  actsList.querySelectorAll("button").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ currentAct=btn.dataset.act; showAct(); });
+  });
 
-// post handler
-postBtn.addEventListener("click", () => {
-  const file = postImage.files[0];
-  const textValue = postText.value.trim();
+  backBtn.addEventListener("click", ()=>{ currentAct=null; showIndex(); });
 
-  if (!file) {
-    alert("You must add an image!");
-    return;
-  }
-  if (containsBannedWords(textValue)) {
-    alert("Your post contains banned words in the text and cannot be submitted.");
-    return;
-  }
-  if (containsBannedWords(file.name)) {
-    alert("Your image filename contains banned words and cannot be submitted.");
-    return;
-  }
+  postBtn.addEventListener("click", ()=>{
+    const file = postImage.files[0];
+    const textValue = postText.value.trim();
+    if(!file){ alert("You must add an image!"); return; }
+    if(containsBannedWords(textValue)){ alert("Your post contains banned words and cannot be submitted."); return; }
+    if(containsBannedWords(file.name)){ alert("Your image filename contains banned words and cannot be submitted."); return; }
 
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    const newPost = {
-      username,
-      text: textValue,
-      image: ev.target.result,
-      time: new Date().toLocaleString()
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const newPost = {
+        username,
+        text: textValue,
+        image: ev.target.result,
+        time: new Date().toLocaleString()
+      };
+      posts[currentAct] = posts[currentAct] ? [newPost, ...posts[currentAct]] : [newPost];
+      localStorage.setItem("posts", JSON.stringify(posts));
+      postText.value="";
+      postImage.value="";
+      renderPosts();
     };
-    posts[currentAct] = posts[currentAct] ? [newPost, ...posts[currentAct]] : [newPost];
-    localStorage.setItem("posts", JSON.stringify(posts));
-    postText.value = "";
-    postImage.value = "";
-    renderPosts();
-  };
-  reader.readAsDataURL(file);
-});
-
-// update mod UI on load
-updateModUI();
+    reader.readAsDataURL(file);
+  });
+})();
