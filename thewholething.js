@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+function ActOut() {
+  const { useState, useEffect } = React;
 
-// act out — old-school forum-style minimalist social site
-export default function ActOut() {
   const [view, setView] = useState("index");
   const [currentAct, setCurrentAct] = useState(null);
   const [username, setUsername] = useState(localStorage.getItem("username") || "");
@@ -34,52 +33,65 @@ export default function ActOut() {
     setCurrentAct(null);
   }
 
-  return (
-    <div className="min-h-screen bg-black text-white font-mono p-4">
-      <h1 className="text-lg mb-4 border-b border-white/20 pb-2">act out forum</h1>
-      {!username ? (
-        <div>
-          <p>enter your username:</p>
-          <input
-            className="bg-black border border-white/30 text-white p-1 mt-2"
-            value={username}
-            onChange={(e) => saveUsername(e.target.value)}
-            placeholder="your name"
-          />
-        </div>
-      ) : view === "index" ? (
-        <IndexView acts={acts} openAct={openAct} />
-      ) : (
-        <ActView act={currentAct} posts={posts} setPosts={setPosts} username={username} goHome={goHome} />
-      )}
-    </div>
+  return React.createElement(
+    "div",
+    { style: { minHeight: "100vh", background: "black", color: "white", fontFamily: "monospace", padding: "16px" } },
+    React.createElement("h1", { style: { fontSize: "20px", marginBottom: "12px", borderBottom: "1px solid #444", paddingBottom: "8px" } }, "act out forum"),
+    !username
+      ? React.createElement(
+          "div",
+          null,
+          React.createElement("p", null, "enter your username:"),
+          React.createElement("input", {
+            style: { background: "black", border: "1px solid #555", color: "white", padding: "4px", marginTop: "8px" },
+            value: username,
+            onChange: (e) => saveUsername(e.target.value),
+            placeholder: "your name",
+          })
+        )
+      : view === "index"
+      ? React.createElement(IndexView, { acts, openAct })
+      : React.createElement(ActView, { act: currentAct, posts, setPosts, username, goHome })
   );
 }
 
 function IndexView({ acts, openAct }) {
-  return (
-    <div>
-      <p className="opacity-80 mb-2">choose your act:</p>
-      <ul className="space-y-2">
-        {acts.map((a) => (
-          <li key={a}>
-            <button
-              onClick={() => openAct(a)}
-              className="underline text-white/80 hover:text-white text-left"
-            >
-              {a}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+  return React.createElement(
+    "div",
+    null,
+    React.createElement("p", { style: { opacity: 0.8, marginBottom: "8px" } }, "choose your act:"),
+    React.createElement(
+      "ul",
+      null,
+      acts.map((a) =>
+        React.createElement(
+          "li",
+          { key: a, style: { marginBottom: "6px" } },
+          React.createElement(
+            "button",
+            {
+              onClick: () => openAct(a),
+              style: {
+                textDecoration: "underline",
+                color: "white",
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+              },
+            },
+            a
+          )
+        )
+      )
+    )
   );
 }
 
 function ActView({ act, posts, setPosts, username, goHome }) {
+  const { useState } = React;
   const [text, setText] = useState("");
   const [image, setImage] = useState(null);
-
   const actPosts = posts[act] || [];
 
   function handleImage(e) {
@@ -108,37 +120,51 @@ function ActView({ act, posts, setPosts, username, goHome }) {
     setImage(null);
   }
 
-  return (
-    <div>
-      <button onClick={goHome} className="text-sm underline text-white/70 mb-4">← back</button>
-      <h2 className="text-lg mb-2">act: {act}</h2>
+  return React.createElement(
+    "div",
+    null,
+    React.createElement(
+      "button",
+      {
+        onClick: goHome,
+        style: { fontSize: "12px", textDecoration: "underline", color: "#aaa", marginBottom: "16px", background: "none", border: "none", cursor: "pointer" },
+      },
+      "← back"
+    ),
+    React.createElement("h2", { style: { fontSize: "18px", marginBottom: "8px" } }, "act: " + act),
 
-      <div className="border border-white/30 p-3 mb-6">
-        <textarea
-          placeholder="optional text..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="w-full bg-black border border-white/30 p-2 text-white mb-2 h-20"
-        />
-        {image && <img src={image} alt="preview" className="mb-2 border border-white/20" />}
-        <div className="flex justify-between items-center">
-          <input type="file" accept="image/*" onChange={handleImage} className="text-xs" />
-          <button onClick={post} className="bg-white text-black px-2 py-1 text-sm font-bold">post</button>
-        </div>
-      </div>
+    React.createElement(
+      "div",
+      { style: { border: "1px solid #444", padding: "12px", marginBottom: "24px" } },
+      React.createElement("textarea", {
+        placeholder: "optional text...",
+        value: text,
+        onChange: (e) => setText(e.target.value),
+        style: { width: "100%", background: "black", border: "1px solid #444", color: "white", padding: "8px", marginBottom: "8px", height: "80px" },
+      }),
+      image && React.createElement("img", { src: image, alt: "preview", style: { border: "1px solid #333", marginBottom: "8px", maxWidth: "100%" } }),
+      React.createElement(
+        "div",
+        { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } },
+        React.createElement("input", { type: "file", accept: "image/*", onChange: handleImage, style: { fontSize: "10px" } }),
+        React.createElement(
+          "button",
+          { onClick: post, style: { background: "white", color: "black", padding: "4px 8px", fontSize: "12px", fontWeight: "bold" } },
+          "post"
+        )
+      )
+    ),
 
-      <div className="space-y-4">
-        {actPosts.length === 0 && <p className="opacity-60">no posts yet in this act</p>}
-        {actPosts.map((p) => (
-          <div key={p.id} className="border border-white/30 p-3">
-            <div className="text-xs opacity-70 mb-2">
-              posted by {p.username} · {p.time}
-            </div>
-            {p.text && <p className="mb-2 text-sm whitespace-pre-wrap">{p.text}</p>}
-            <img src={p.image} alt="post" className="border border-white/20" />
-          </div>
-        ))}
-      </div>
-    </div>
+    actPosts.length === 0
+      ? React.createElement("p", { style: { opacity: 0.6 } }, "no posts yet in this act")
+      : actPosts.map((p) =>
+          React.createElement(
+            "div",
+            { key: p.id, style: { border: "1px solid #444", padding: "12px", marginBottom: "12px" } },
+            React.createElement("div", { style: { fontSize: "12px", opacity: 0.7, marginBottom: "8px" } }, `posted by ${p.username} · ${p.time}`),
+            p.text && React.createElement("p", { style: { marginBottom: "8px", fontSize: "14px", whiteSpace: "pre-wrap" } }, p.text),
+            React.createElement("img", { src: p.image, alt: "post", style: { border: "1px solid #333", maxWidth: "100%" } })
+          )
+        )
   );
 }
