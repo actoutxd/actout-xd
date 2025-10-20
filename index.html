@@ -1,48 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Act Out XD</title>
   <style>
-    body { font-family: sans-serif; background: #222; color: #fff; text-align: center; }
-    #username-container, #index-view, #act-view { display:none; margin-top:20px; }
-    .post { border: 1px solid #444; margin: 10px auto; padding: 10px; width: 80%; background: #333; border-radius:8px; }
-    img { max-width: 100%; border-radius: 6px; }
-    button { margin-top:8px; cursor:pointer; background:#555; color:#fff; border:none; padding:6px 10px; border-radius:6px; }
-    button.danger { background: #c33; }
+    body { margin:0; background:black; color:white; font-family:monospace; }
+    #root { padding:16px; }
+    input, textarea, button { font-family: monospace; }
+    textarea {
+      width:100%; background:black; color:white; border:1px solid #444; padding:8px; margin-bottom:8px; height:80px;
+    }
+    button { cursor:pointer; }
+    .post img { max-width:100%; border:1px solid #333; margin-bottom:8px; }
+    .act-posts .post { border:1px solid #444; padding:12px; margin-bottom:12px; background:#111; border-radius:6px; }
+    #rules { margin-bottom:16px; border:1px solid #555; padding:8px; background:#111; }
+    .small { font-size:12px; opacity:0.9; }
+    .danger { color:#ff7070; border:0; background:none; cursor:pointer; float:right; }
+    .muted { color:#aaa; font-size:12px; }
   </style>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h1>Act Out XD</h1>
+  <div id="root">
+    <h1 style="font-size:20px; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:8px;">act out forum</h1>
 
-  <div id="username-container">
-    <p>enter your username:</p>
-    <input id="username-input" placeholder="username">
-  </div>
-
-  <div id="index-view">
-    <p>Logged in as <span id="username-display"></span> <span id="mod-badge-slot"></span></p>
-    <p id="mod-status"></p>
-    <h3>Choose an act:</h3>
-    <div id="acts-list">
-      <button data-act="act1">working at fast food</button>
-      <button data-act="act2">doing chores at home</button>
-      <button data-act="act3">being a teacher</button>
+    <!-- Rules -->
+    <div id="rules">
+      <h3 style="margin:0 0 8px 0;">Rules:</h3>
+      <ul style="margin:0 0 0 18px; padding:0;">
+        <li>No gore</li>
+        <li>No pornographic content</li>
+        <li>No slurs or hate speech</li>
+      </ul>
     </div>
-  </div>
 
-  <div id="act-view">
-    <button id="back-btn">← back</button>
-    <h2 id="act-title"></h2>
+    <!-- Username input -->
+    <div id="username-container">
+      <p>Enter your username:</p>
+      <input type="text" id="username-input" placeholder="your name">
+    </div>
 
-    <textarea id="post-text" placeholder="say something..."></textarea><br>
-    <input type="file" id="post-image" accept="image/*"><br>
-    <button id="post-btn">Post</button>
+    <!-- Index -->
+    <div id="index-view" style="display:none;">
+      <p style="opacity:0.8; margin-bottom:8px;">choose your act:</p>
+      <ul id="acts-list">
+        <li><button data-act="working at a fast food">working at a fast food</button></li>
+        <li><button data-act="animation studio">animation studio</button></li>
+        <li><button data-act="doing chores">doing chores</button></li>
+        <li><button data-act="baking">baking</button></li>
+        <li><button data-act="being a teacher">being a teacher</button></li>
+      </ul>
+      <div style="margin-top:10px;" class="muted">
+        You: <span id="username-display"></span><span id="mod-badge-slot"></span>
+      </div>
+      <div id="mod-status" class="muted"></div>
+    </div>
 
-    <div id="act-posts"></div>
+    <!-- Act view -->
+    <div id="act-view" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <button id="back-btn" style="font-size:12px; text-decoration:underline; color:#aaa; margin-bottom:16px; background:none; border:none;">← back</button>
+        <div class="small muted">You: <span id="username-display"></span><span id="mod-badge-slot"></span></div>
+      </div>
+
+      <h2 id="act-title" style="font-size:18px; margin-bottom:8px;"></h2>
+
+      <div style="border:1px solid #444; padding:12px; margin-bottom:24px;">
+        <textarea id="post-text" placeholder="optional text..."></textarea>
+        <input type="file" id="post-image" />
+        <div style="margin-top:8px;">
+          <button id="post-btn" style="background:white;color:black;padding:4px 8px;font-size:12px;font-weight:bold;">post</button>
+          <span class="muted" style="margin-left:8px;">(image required)</span>
+        </div>
+      </div>
+
+      <div class="act-posts" id="act-posts"><!-- posts go here --></div>
+    </div>
   </div>
 
   <script src="script.js"></script>
