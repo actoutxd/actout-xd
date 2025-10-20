@@ -13,6 +13,7 @@ const db = firebase.firestore();
 
 // DOM elements
 const usernameInput = document.getElementById("username-input");
+const usernameBtn = document.getElementById("username-btn");
 const usernameContainer = document.getElementById("username-container");
 const indexView = document.getElementById("index-view");
 const actView = document.getElementById("act-view");
@@ -98,7 +99,9 @@ function subscribePosts() {
         div.className = "post";
         const canDelete = isMod() || p.username === username;
         const delButtonHtml = canDelete ? `<button data-id="${doc.id}" class="danger">delete</button>` : "";
-        const userBadgeHtml = isMod() ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
+        const userBadgeHtml = moderators.includes(p.username)
+          ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">`
+          : "";
 
         div.innerHTML = `
           <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
@@ -130,13 +133,19 @@ function subscribePosts() {
     usernameContainer.style.display = "block";
   }
 
-  usernameInput.addEventListener("change", () => {
+  function setUsername() {
     username = usernameInput.value.trim();
     if (username) {
       localStorage.setItem("username", username);
       showIndex();
     }
+  }
+
+  // Press Enter or click button to confirm username
+  usernameInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") setUsername();
   });
+  if (usernameBtn) usernameBtn.addEventListener("click", setUsername);
 
   actsList.querySelectorAll("button").forEach(btn => {
     btn.addEventListener("click", () => { 
@@ -175,4 +184,3 @@ function subscribePosts() {
     reader.readAsDataURL(file);
   });
 })();
-                                                                       
