@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>act out XD demo</title>
+  <title>Act Out XD</title>
 
-  <!-- Minimal styling -->
+  <!-- Load React + Babel before your code -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -14,25 +18,20 @@
       font-family: monospace;
     }
     #root {
-      padding: 10px;
+      padding: 12px;
     }
   </style>
-
-  <!-- Load React + Babel -->
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
-  <div id="root">loading act out...</div>
+  <div id="root">Loading act out...</div>
 
-  <!-- 🚨 Load your file THROUGH Babel so JSX works -->
-  <script type="text/babel" data-type="module" src="thewholething.jsx"></script>
+  <!-- 💡 IMPORTANT: Load your file as type=text/babel -->
+  <script type="text/babel" src="thewholething.js"></script>
 
-  <!-- Render your React component -->
+  <!-- Then mount it to the DOM -->
   <script type="text/babel">
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(React.createElement(ActOut));
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ActOut />);
   </script>
 </body>
 </html>
