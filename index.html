@@ -1,10 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Actout XD Demo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>act out XD demo</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: monospace;
+    }
+    #root {
+      padding: 10px;
+    }
+  </style>
+
+  <!-- Load React + ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
-  <script src="https://raw.githubusercontent.com/actoutxd/actout-xd/main/thewholething.js"></script>
+  <div id="root">loading act out...</div>
+
+  <!-- Load your GitHub raw file -->
+  <script type="text/babel" src="https://raw.githubusercontent.com/actoutxd/actout-xd/main/thewholething.js"></script>
+
+  <!-- Render the app -->
+  <script type="text/babel">
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(React.createElement(ActOut));
+  </script>
 </body>
 </html>
