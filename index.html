@@ -9,21 +9,24 @@
     #root { padding:16px; }
     input, textarea, button { font-family: monospace; }
     textarea {
-      width:100%; background:black; color:white; border:1px solid #444; padding:8px; margin-bottom:8px; height:80px;
+      width:100%; background:black; color:white; border:1px solid #444;
+      padding:8px; margin-bottom:8px; height:80px;
     }
     button { cursor:pointer; }
     .post img { max-width:100%; border:1px solid #333; margin-bottom:8px; }
     .act-posts .post { border:1px solid #444; padding:12px; margin-bottom:12px; }
     #rules { margin-bottom:16px; border:1px solid #555; padding:8px; background:#111; }
     .small { font-size:12px; opacity:0.9; }
-    .mod-badge { display:inline-block; padding:2px 6px; background:#444; color:#fff; border-radius:4px; font-size:12px; margin-left:8px; }
     .danger { color:#ff7070; border:0; background:none; cursor:pointer; }
     .muted { color:#aaa; font-size:12px; }
+    .mod-badge { width:14px; height:14px; vertical-align:text-bottom; margin-left:4px; }
   </style>
 </head>
 <body>
   <div id="root">
-    <h1 style="font-size:20px; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:8px;">act out forum</h1>
+    <h1 style="font-size:20px; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:8px;">
+      act out forum
+    </h1>
 
     <!-- Rules -->
     <div id="rules">
@@ -39,6 +42,10 @@
     <div id="username-container">
       <p>Enter your username:</p>
       <input type="text" id="username-input" placeholder="your name">
+      <button id="username-enter-btn"
+        style="background:white;color:black;padding:4px 8px;font-size:12px;font-weight:bold;margin-left:6px;">
+        enter
+      </button>
     </div>
 
     <!-- Index -->
@@ -55,9 +62,14 @@
 
     <!-- Act view -->
     <div id="act-view" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between; margin-bottom:12px;">
-        <button id="back-btn" style="font-size:12px; text-decoration:underline; color:#aaa; background:none; border:none;">← back</button>
-        <div class="small muted">You: <span id="username-display"></span><span id="mod-badge-slot"></span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <button id="back-btn"
+          style="font-size:12px;text-decoration:underline;color:#aaa;margin-bottom:16px;background:none;border:none;">
+          ← back
+        </button>
+        <div class="small muted">
+          You: <span id="username-display"></span><span id="mod-badge-slot"></span>
+        </div>
       </div>
 
       <h2 id="act-title" style="font-size:18px; margin-bottom:8px;"></h2>
@@ -66,13 +78,16 @@
         <textarea id="post-text" placeholder="optional text..."></textarea>
         <input type="file" id="post-image" />
         <div style="margin-top:8px;">
-          <button id="post-btn" style="background:white;color:black;padding:4px 8px;font-size:12px;font-weight:bold;">post</button>
+          <button id="post-btn"
+            style="background:white;color:black;padding:4px 8px;font-size:12px;font-weight:bold;">
+            post
+          </button>
           <span class="muted" style="margin-left:8px;">(image required)</span>
         </div>
       </div>
 
       <div class="act-posts" id="act-posts"><!-- posts go here --></div>
-    </div> 
+    </div>
   </div>
 
   <script src="script.js"></script>
