@@ -1,4 +1,6 @@
-/* fave ver of codr
+/* script.js - Act Out (plain JS)
+   Hardcoded moderator password is internal only; no UI for setting it
+   Moderator powers: delete any post, manage banned words, ban users
 */
 
 const usernameInput = document.getElementById("username-input");
@@ -13,8 +15,6 @@ const postImage = document.getElementById("post-image");
 const postBtn = document.getElementById("post-btn");
 const actPosts = document.getElementById("act-posts");
 
-const modPassword = document.getElementById("mod-password");
-const modLoginBtn = document.getElementById("mod-login-btn");
 const modLogoutBtn = document.getElementById("mod-logout-btn");
 const modStatus = document.getElementById("mod-status");
 const modBadgeSlot = document.getElementById("mod-badge-slot");
@@ -22,12 +22,12 @@ const usernameDisplay = document.getElementById("username-display");
 
 let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
+let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || '[]');
 let currentAct = null;
 
 const bannedWords = ["retard", "retarded", "fuck", "shit", "nigger", "faggot", "trannie"];
 const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
-// STAFF_PASSWORD is hardcoded and cannot be changed through the UI
-const STAFF_PASSWORD = "Sug•|!";
+const STAFF_PASSWORD = "Sug•|!"; // hardcoded internal password
 
 function containsBannedWords(text) {
   if (!text) return false;
@@ -45,26 +45,22 @@ function isMod() {
   return sessionStorage.getItem("actout_is_mod") === "1";
 }
 
-// --- moderator login/logout ---
-modLoginBtn?.addEventListener("click", () => {
-  const pw = modPassword.value.trim();
-  if (pw === STAFF_PASSWORD) {
+// call this internally to log in as a mod (hardcoded password)
+function loginMod(pw) {
+  if(pw===STAFF_PASSWORD){
     sessionStorage.setItem("actout_is_mod","1");
-    modPassword.value="";
     updateModUI();
     alert("Moderator login successful");
   } else alert("Incorrect password");
-});
+}
 
-modLogoutBtn?.addEventListener("click", () => {
+modLogoutBtn?.addEventListener("click", ()=>{
   sessionStorage.removeItem("actout_is_mod");
   updateModUI();
 });
 
 function updateModUI() {
   const mod = isMod();
-  modLoginBtn.style.display = !mod ? "inline-block" : "none";
-  modPassword.style.display = !mod ? "inline-block" : "none";
   modLogoutBtn.style.display = mod ? "inline-block" : "none";
   modStatus.textContent = mod ? "logged in as moderator" : "not logged in";
   modBadgeSlot.innerHTML = mod ? `<img src="${modBadgeUrl}" style="width:14px;height:14px;margin-left:4px;vertical-align:text-bottom;">` : "";
@@ -120,6 +116,7 @@ function renderPosts() {
         renderPosts();
       });
     }
+
     actPosts.appendChild(div);
   });
 }
@@ -132,6 +129,12 @@ function renderPosts() {
 
   usernameInput.addEventListener("change", ()=>{
     username=usernameInput.value.trim();
+    if(bannedUsers.includes(username)){
+      alert("You are banned from posting!");
+      username="";
+      usernameInput.value="";
+      return;
+    }
     if(username){ localStorage.setItem("username", username); showIndex(); }
   });
 
@@ -147,6 +150,7 @@ function renderPosts() {
     if(!file){ alert("You must add an image!"); return; }
     if(containsBannedWords(textValue)){ alert("Your post contains banned words and cannot be submitted."); return; }
     if(containsBannedWords(file.name)){ alert("Your image filename contains banned words and cannot be submitted."); return; }
+    if(bannedUsers.includes(username)){ alert("You are banned from posting!"); return; }
 
     const reader = new FileReader();
     reader.onload = function(ev){
