@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Act Out XD</title>
 
-  <!-- Load React + Babel before your code -->
+  <!-- React & ReactDOM (from CDN) -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
     body {
@@ -25,13 +24,20 @@
 <body>
   <div id="root">Loading act out...</div>
 
-  <!-- 💡 IMPORTANT: Load your file as type=text/babel -->
-  <script type="text/babel" src="thewholething.jsx"></script>
+  <!-- Load your raw GitHub JS file -->
+  <script src="https://raw.githubusercontent.com/actoutxd/actout-xd/main/thewholething.js"></script>
 
-  <!-- Then mount it to the DOM -->
-  <script type="text/babel">
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<ActOut />);
+  <script>
+    // Wait for script to load before rendering
+    window.addEventListener("load", function () {
+      if (typeof ActOut === "function") {
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(React.createElement(ActOut));
+      } else {
+        document.getElementById("root").textContent =
+          "Error: ActOut() not found. Check your JS file.";
+      }
+    });
   </script>
 </body>
 </html>
