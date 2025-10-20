@@ -1,5 +1,4 @@
-/* script.js - Act Out (plain JS)
-*/
+
 
 const usernameInput = document.getElementById("username-input");
 const usernameContainer = document.getElementById("username-container");
@@ -30,7 +29,7 @@ let bannedWords = JSON.parse(localStorage.getItem("bannedWords") || '["retard","
 let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || '[]');
 let currentAct = null;
 
-const STAFF_PASSWORD = "Sug•|!"; // plain-text moderator password
+const STAFF_PASSWORD = "Sug•|!"; // hardcoded plain-text password
 const modBadgeUrl = "https://pixelsafari.neocities.org/favicon/nature/star/star26.gif";
 
 // --- helpers ---
