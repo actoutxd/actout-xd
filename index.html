@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Act Out XD</title>
 
-  <!-- React & ReactDOM (from CDN) -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
@@ -16,26 +15,22 @@
       color: white;
       font-family: monospace;
     }
-    #root {
-      padding: 12px;
-    }
   </style>
 </head>
 <body>
-  <div id="root">Loading act out...</div>
+  <div id="root">loading act out...</div>
 
-  <!-- Load your raw GitHub JS file -->
+  <!-- Load your JS directly from GitHub -->
   <script src="https://raw.githubusercontent.com/actoutxd/actout-xd/main/thewholething.js"></script>
 
   <script>
-    // Wait for script to load before rendering
     window.addEventListener("load", function () {
       if (typeof ActOut === "function") {
         const root = ReactDOM.createRoot(document.getElementById("root"));
         root.render(React.createElement(ActOut));
       } else {
         document.getElementById("root").textContent =
-          "Error: ActOut() not found. Check your JS file.";
+          "Error: ActOut() not found in JS file.";
       }
     });
   </script>
