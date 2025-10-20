@@ -14,6 +14,7 @@ let username = localStorage.getItem("username") || "";
 let posts = JSON.parse(localStorage.getItem("posts") || "{}");
 let currentAct = null;
 
+// Show views
 function showIndex() {
   usernameContainer.style.display = username ? "none" : "block";
   indexView.style.display = username ? "block" : "none";
@@ -28,6 +29,7 @@ function showAct() {
   renderPosts();
 }
 
+// Render posts for current act
 function renderPosts() {
   actPosts.innerHTML = "";
   const actList = posts[currentAct] || [];
@@ -47,13 +49,11 @@ function renderPosts() {
   }
 }
 
-// username
-if (username) {
-  showIndex();
-} else {
-  usernameContainer.style.display = "block";
-}
+// Initialize
+if (username) showIndex();
+else usernameContainer.style.display = "block";
 
+// Username input
 usernameInput.addEventListener("change", () => {
   username = usernameInput.value.trim();
   if (username) {
@@ -62,7 +62,7 @@ usernameInput.addEventListener("change", () => {
   }
 });
 
-// acts click
+// Act buttons
 actsList.querySelectorAll("button").forEach(btn => {
   btn.addEventListener("click", () => {
     currentAct = btn.dataset.act;
@@ -70,13 +70,13 @@ actsList.querySelectorAll("button").forEach(btn => {
   });
 });
 
-// back button
+// Back button
 backBtn.addEventListener("click", () => {
   currentAct = null;
   showIndex();
 });
 
-// post button
+// Post button
 postBtn.addEventListener("click", () => {
   const file = postImage.files[0];
   if (!file) {
